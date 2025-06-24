@@ -1,10 +1,9 @@
 import React from 'react';
-import './App.css';
 import Navbar from './Pages/Navbar.jsx';
 import LeftPanel from './Pages/LeftPanel.jsx';
 import Canvas from './Pages/Canvas.jsx';
 import RightPanel from "./Pages/RightPanel.jsx";
-import useStore from './store.js';  // import Zustand store
+import useStore from './store.js'; 
 
 export default function App() {
   const { 
