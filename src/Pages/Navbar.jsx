@@ -1,9 +1,76 @@
-import React from "react";
-import { ArrowLeft, Save, Upload, Download, ChevronDown, ChevronUp, Scissors, Copy, Clipboard, Trash2 ,Redo,Undo} from 'lucide-react';
-import useStore from '../store.js';  // import Zustand store
+import React, { useRef } from "react";
+import {
+  ArrowLeft,
+  Save,
+  Upload,
+  Download,
+  ChevronDown,
+  ChevronUp,
+  Scissors,
+  Copy,
+  Clipboard,
+  Trash2,
+  Redo,
+  Undo
+} from 'lucide-react';
+
+import useStore from '../store.js';            
+import useFlowStore from "../canvasstore";      
 
 const Navbar = () => {
   const { navbarExpanded, toggleNavbar, toggleLeftPanel, toggleRightPanel } = useStore();
+
+  const nodes = useFlowStore((state) => state.nodes);
+  const edges = useFlowStore((state) => state.edges);
+//adding these
+const {
+  selectedNodeId,
+  deleteNode,
+  copyNode,
+  cutNode,
+  pasteNode,
+  duplicateNode,
+  redo,undo
+} = useFlowStore();
+
+
+  const handleExport = () => {
+    try {
+      const flowData = { nodes, edges };
+      const json = JSON.stringify(flowData, null, 2);
+      const blob = new Blob([json], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "my-flow.pdf"; 
+      a.click();
+
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Something went wrong during export.");
+    }
+  };
+
+
+  const handleSaveAs = async () => {
+  const data = { nodes, edges };
+  const fileHandle = await window.showSaveFilePicker({
+    suggestedName: "my-flow.json",
+    types: [
+      {
+        description: "JSON Files",
+        accept: { "application/pdf": [".pdf"] },
+      },
+    ],
+  });
+
+  const writableStream = await fileHandle.createWritable();
+  await writableStream.write(JSON.stringify(data, null, 2));
+  await writableStream.close();
+};
+
 
   return (
     <nav className="fixed top-0 left-0 w-full bg-white shadow z-40">
@@ -20,17 +87,20 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-          <button className="flex items-center px-1 py-0.5 border rounded text-xs">
-            <Save className="w-4 h-4 mr-1" />
-            Save
-          </button>
+        <button onClick={handleSaveAs} className="flex items-center px-1 py-0.5 border rounded text-xs">
+  <Save className="w-4 h-4 mr-1" />
+  Save As
+</button>
 
-          <button className="flex items-center px-1 py-0.5 border rounded text-xs">
+      
+          <button
+            className="flex items-center px-1 py-0.5 border rounded text-xs "
+          >
             <Download className="w-4 h-4 mr-1" />
             Import
           </button>
 
-          <button className="flex items-center px-1 py-0.5 border rounded text-xs">
+          <button onClick={handleExport} className="flex items-center px-1 py-0.5 border rounded text-xs">
             <Upload className="w-4 h-4 mr-1" />
             Export
           </button>
@@ -39,7 +109,6 @@ const Navbar = () => {
             {navbarExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </button>
         </div>
-
       </div>
 
       {navbarExpanded && (
@@ -48,12 +117,12 @@ const Navbar = () => {
             <button onClick={toggleLeftPanel} className="px-3 py-1 rounded text-xs shadow mr-3">
               Shapes Panel
             </button>
-            <button><Copy size={14}/></button>
-            <button><Scissors size={14}/></button>
-            <button><Clipboard size={14}/></button>
-            <button><Trash2 size={14}/></button>
-            <button><Undo size={14}/></button>
-            <button><Redo size={14}/></button>
+          <button onClick={copyNode} disabled={!selectedNodeId}><Copy size={14} /></button>
+<button onClick={cutNode} disabled={!selectedNodeId}><Scissors size={14} /></button>
+<button onClick={pasteNode}><Clipboard size={14} /></button>
+<button onClick={() => deleteNode(selectedNodeId)} disabled={!selectedNodeId}><Trash2 size={14} /></button>
+            <button onClick={undo}><Undo size={14} /></button>
+<button onClick={redo}><Redo size={14} /></button>
           </div>
 
           <div>
